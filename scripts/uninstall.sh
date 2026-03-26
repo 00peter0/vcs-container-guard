@@ -44,11 +44,12 @@ ${SUDO} rm -f /root/.container-guard-credentials
 
 info "Mažem DB..."
 PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d postgres \
-  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" \
-  2>/dev/null || true
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" 2>/dev/null || true
 PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d postgres \
-  -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || \
-  ${SUDO} -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" && \
-  ${SUDO} -u postgres psql -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+  -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
+if sudo -u postgres psql -lqt 2>/dev/null | cut -d\| -f1 | grep -qw "${DB_NAME}"; then
+  sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" 2>/dev/null || true
+  sudo -u postgres psql -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
+fi
 
 success "Container Guard odinštalovaný"
