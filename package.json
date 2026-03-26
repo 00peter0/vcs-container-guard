@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "reset-key": "bash scripts/reset-key.sh"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
