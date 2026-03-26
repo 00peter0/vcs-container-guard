@@ -3,11 +3,6 @@ set -euo pipefail
 
 INSTALL_DIR="/opt/vcs-tools/container-guard"
 REPO_URL="git@github.com:00peter0/vcs-container-guard.git"
-DB_NAME="container_guard"
-DB_USER="vcs-admin"
-DB_PASS="VcsAdmin2024!"
-DB_HOST="127.0.0.1"
-DB_PORT="5432"
 API_PORT="3847"
 UI_PORT="4000"
 API_SERVICE="vcs-container-guard"
@@ -26,7 +21,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-DB_URL="${DB_URL:-postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}}"
+DB_URL="${DB_URL:-}"
+[[ -n "${DB_URL}" ]] || die "Chýba --db-url. Použitie: $0 --db-url postgresql://user:pass@host:port/dbname"
+DB_NAME="${DB_URL##*/}"; DB_NAME="${DB_NAME%%\?*}"
+POSTGRES_URL="${DB_URL%/${DB_NAME}}/postgres"
 UPDATE_MODE="${UPDATE_MODE:-0}"
 
 info "Kontrolujem závislosti..."
@@ -73,13 +71,11 @@ cp -r "${INSTALL_DIR}/ui/.next/static" "${UI_STANDALONE}/.next/static"
 cp -r "${INSTALL_DIR}/ui/public" "${UI_STANDALONE}/public" 2>/dev/null || true
 
 info "PostgreSQL migrácia..."
-PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d postgres \
-  -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1 || {
-  PGPASSWORD="${DB_PASS}" createdb -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" "${DB_NAME}"
+psql "${POSTGRES_URL}" -tc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1 || {
+  psql "${POSTGRES_URL}" -c "CREATE DATABASE \"${DB_NAME}\";"
   success "DB vytvorená"
 }
-PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d "${DB_NAME}" \
-  -f "${INSTALL_DIR}/migrations/001_init.sql" -q
+psql "${DB_URL}" -f "${INSTALL_DIR}/migrations/001_init.sql" -q
 success "Migrácia OK"
 
 API_KEY="$(openssl rand -hex 32)"
@@ -137,7 +133,7 @@ WantedBy=multi-user.target
 EOF
 
 info "Nastavujem cron job pre scanner..."
-DB_URL_CRON="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+DB_URL_CRON="${DB_URL}"
 (crontab -l 2>/dev/null | grep -v container-guard; \
   printf '*/5 * * * * DATABASE_URL=%s /usr/bin/node %s/dist/scanner-cron.js >> /var/log/container-guard-scan.log 2>&1\n' \
   "${DB_URL_CRON}" "${INSTALL_DIR}") | crontab -
