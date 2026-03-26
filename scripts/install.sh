@@ -143,7 +143,7 @@ WantedBy=multi-user.target
 EOF
 
 info "Nastavujem cron job pre scanner..."
-DB_URL_CRON="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+DB_URL_CRON='postgresql://'"${DB_USER}"':'"${DB_PASS}"'@'"${DB_HOST}"':'"${DB_PORT}"'/'"${DB_NAME}"
 (crontab -l 2>/dev/null | grep -v container-guard; \
   printf '*/5 * * * * DATABASE_URL=%s /usr/bin/node %s/dist/scanner-cron.js >> /var/log/container-guard-scan.log 2>&1\n' \
   "${DB_URL_CRON}" "${INSTALL_DIR}") | crontab -
