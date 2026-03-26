@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SUDO=""
+if [[ "$(id -u)" != "0" ]]; then
+  SUDO="sudo"
+fi
+
 INSTALL_DIR="/opt/vcs-tools/container-guard"
 REPO_URL="git@github.com:00peter0/vcs-container-guard.git"
 DB_NAME="container_guard"
@@ -38,10 +43,10 @@ command -v openssl >/dev/null 2>&1 || die "openssl nie je nainštalovaný"
 success "Závislosti OK"
 
 info "Zastavujem existujúce services..."
-systemctl stop "${API_SERVICE}" 2>/dev/null || true
-systemctl stop "${UI_SERVICE}"  2>/dev/null || true
-fuser -k "${API_PORT}/tcp" 2>/dev/null || true
-fuser -k "${UI_PORT}/tcp"  2>/dev/null || true
+${SUDO} systemctl stop "${API_SERVICE}" 2>/dev/null || true
+${SUDO} systemctl stop "${UI_SERVICE}"  2>/dev/null || true
+${SUDO} fuser -k "${API_PORT}/tcp" 2>/dev/null || true
+${SUDO} fuser -k "${UI_PORT}/tcp"  2>/dev/null || true
 sleep 1
 
 if [[ "${UPDATE_MODE}" == "1" && -d "${INSTALL_DIR}/.git" ]]; then
@@ -49,9 +54,10 @@ if [[ "${UPDATE_MODE}" == "1" && -d "${INSTALL_DIR}/.git" ]]; then
   cd "${INSTALL_DIR}" && git pull origin main
 else
   info "Klonovanie do ${INSTALL_DIR}..."
-  rm -rf "${INSTALL_DIR}"
-  mkdir -p "$(dirname "${INSTALL_DIR}")"
-  git clone "${REPO_URL}" "${INSTALL_DIR}"
+  ${SUDO} rm -rf "${INSTALL_DIR}"
+  ${SUDO} mkdir -p "$(dirname "${INSTALL_DIR}")"
+  ${SUDO} git clone "${REPO_URL}" "${INSTALL_DIR}"
+  ${SUDO} chown -R "$(id -u):$(id -g)" "${INSTALL_DIR}"
 fi
 
 cd "${INSTALL_DIR}"
@@ -84,7 +90,7 @@ success "Migrácia OK"
 
 API_KEY="$(openssl rand -hex 32)"
 
-cat > "${INSTALL_DIR}/config.json" << EOF
+${SUDO} tee "${INSTALL_DIR}/config.json" > /dev/null << EOF
 {
   "dbUrl": "${DB_URL}",
   "apiPort": ${API_PORT},
@@ -94,7 +100,7 @@ cat > "${INSTALL_DIR}/config.json" << EOF
 EOF
 
 info "Vytváram systemd services..."
-cat > "/etc/systemd/system/${API_SERVICE}.service" << EOF
+${SUDO} tee "/etc/systemd/system/${API_SERVICE}.service" > /dev/null << EOF
 [Unit]
 Description=VCS Container Guard API
 After=network.target postgresql.service
@@ -114,7 +120,7 @@ Environment=CONFIG_PATH=${INSTALL_DIR}/config.json
 WantedBy=multi-user.target
 EOF
 
-cat > "/etc/systemd/system/${UI_SERVICE}.service" << EOF
+${SUDO} tee "/etc/systemd/system/${UI_SERVICE}.service" > /dev/null << EOF
 [Unit]
 Description=VCS Container Guard UI
 After=network.target ${API_SERVICE}.service
@@ -144,11 +150,11 @@ DB_URL_CRON="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 success "Cron nastavený"
 
 info "Spúšťam services..."
-systemctl daemon-reload
-systemctl enable "${API_SERVICE}" "${UI_SERVICE}"
-systemctl start "${API_SERVICE}"
+${SUDO} systemctl daemon-reload
+${SUDO} systemctl enable "${API_SERVICE}" "${UI_SERVICE}"
+${SUDO} systemctl start "${API_SERVICE}"
 sleep 2
-systemctl start "${UI_SERVICE}"
+${SUDO} systemctl start "${UI_SERVICE}"
 sleep 3
 
 info "Overujem..."
