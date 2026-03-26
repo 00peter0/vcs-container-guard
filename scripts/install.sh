@@ -168,7 +168,7 @@ UI_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
 
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║   Container Guard — Inštalácia úspešná! ✓   ║${NC}"
+echo -e "${GREEN}║   Container Guard — Inštalácia úspešná! ✓    ║${NC}"
 echo -e "${GREEN}╠══════════════════════════════════════════════╣${NC}"
-echo -e "${GREEN}║${NC}  Dashboard: https://YOUR_DOMAIN/guard        ${GREEN}║${NC}"
+echo -e "${GREEN}║   Dashboard: https://YOUR_DOMAIN/guard       ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
