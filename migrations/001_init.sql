@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS containers (
   last_seen_at TIMESTAMPTZ DEFAULT NOW(),
   removed_at TIMESTAMPTZ
 );
-ALTER TABLE containers ADD CONSTRAINT IF NOT EXISTS containers_docker_id_unique UNIQUE (docker_id);
+ALTER TABLE containers ADD CONSTRAINT containers_docker_id_unique UNIQUE (docker_id);
 
 CREATE TABLE IF NOT EXISTS images (
   id TEXT PRIMARY KEY,
