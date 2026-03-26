@@ -39,6 +39,11 @@ rm -f /root/.container-guard-credentials
 
 info "Mažem DB..."
 PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d postgres \
-  -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || true
+  -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" \
+  2>/dev/null || true
+PGPASSWORD="${DB_PASS}" psql -U "${DB_USER}" -h "${DB_HOST}" -p "${DB_PORT}" -d postgres \
+  -c "DROP DATABASE IF EXISTS ${DB_NAME};" 2>/dev/null || \
+  sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${DB_NAME}';" && \
+  sudo -u postgres psql -c "DROP DATABASE IF EXISTS ${DB_NAME};"
 
 success "Container Guard odinštalovaný"
