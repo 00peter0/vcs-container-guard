@@ -11,7 +11,7 @@ API_SERVICE="vcs-container-guard"
 UI_SERVICE="vcs-container-guard-ui"
 DB_NAME="container_guard"
 DB_USER="vcs-admin"
-DB_PASS="VcsAdmin2024!"
+DB_PASS='VcsAdmin2024!'
 DB_HOST="127.0.0.1"
 DB_PORT="5432"
 
