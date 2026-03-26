@@ -1,0 +1,13 @@
+              List of relations
+ Schema |      Name      | Type  |   Owner   
+--------+----------------+-------+-----------
+ public | alert_queue    | table | vcs-admin
+ public | config         | table | vcs-admin
+ public | containers     | table | vcs-admin
+ public | issue_events   | table | vcs-admin
+ public | issues         | table | vcs-admin
+ public | port_bindings  | table | vcs-admin
+ public | scans          | table | vcs-admin
+ public | schema_version | table | vcs-admin
+(8 rows)
+
